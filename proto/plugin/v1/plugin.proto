@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package plugin.v1;
+
+option go_package = "github.com/farmops/farmops/proto/plugin/v1;pluginv1";
+
+import "google/protobuf/timestamp.proto";
+
+// FarmPlugin is the gRPC contract every out-of-process plugin must implement.
+// Plugins run as separate binaries/containers and communicate with the agent
+// over a Unix domain socket or localhost gRPC.
+service FarmPlugin {
+  // Describe returns plugin metadata and its source requirements.
+  // Called once when the agent loads the plugin.
+  rpc Describe(DescribeRequest) returns (DescribeResponse);
+
+  // Verify is called by the agent to deliver a raw observation for the plugin
+  // to inspect and return a verification verdict.
+  rpc Verify(VerifyRequest) returns (VerifyResponse);
+
+  // ConfigureSources allows the plugin to declare which Kubernetes resources,
+  // API endpoints, or file paths it needs the agent to watch.
+  rpc ConfigureSources(ConfigureSourcesRequest) returns (ConfigureSourcesResponse);
+}
+
+message DescribeRequest {}
+
+message DescribeResponse {
+  string plugin_id    = 1; // e.g. "farmops/k8s-pod-health"
+  string version      = 2; // semver, e.g. "0.1.0"
+  string description  = 3;
+  repeated string categories = 4; // action categories this plugin handles
+  repeated SourceRequirement source_requirements = 5;
+}
+
+message SourceRequirement {
+  string source_type        = 1; // "kubernetes" | "terraform" | "prometheus" | "git" | "ci" | "custom"
+  repeated string resources = 2; // e.g. ["pods", "deployments"] for kubernetes
+  repeated string endpoints = 3; // e.g. API URLs for prometheus
+}
+
+message VerifyRequest {
+  string observation_id                = 1;
+  string source_type                   = 2;
+  bytes  raw_data                      = 3; // serialized observation payload (JSON)
+  google.protobuf.Timestamp detected_at = 4;
+}
+
+message VerifyResponse {
+  string verdict     = 1; // "verified" | "rejected" | "inconclusive"
+  string reason      = 2; // human-readable explanation (non-sensitive)
+  string action_type = 3; // "verify" | "fix" | "upgrade" | "deploy" | "resolve" | "review" | "configure" | "observe"
+  string category    = 4; // "maintenance" | "toil" | "reliability" | "security" | "incident" | "upgrade"
+  string subcategory = 5; // optional, plugin-defined
+  string description = 6; // non-sensitive human-readable summary for the proof
+  ScoringHints scoring_hints = 7;
+  bytes  evidence    = 8; // structured evidence (kept by agent, hashed for proof — never transmitted to tracker)
+}
+
+message ScoringHints {
+  string complexity         = 1; // "low" | "medium" | "high"
+  int32  impact_radius      = 2; // 1–10
+  int32  artifacts_touched  = 3;
+  int64  time_spent_seconds = 4;
+}
+
+message ConfigureSourcesRequest {
+  map<string, string> agent_config = 1; // agent-provided config (cluster endpoint, etc.)
+}
+
+message ConfigureSourcesResponse {
+  repeated WatchSpec watches = 1;
+}
+
+message WatchSpec {
+  string source_type = 1;
+  string resource    = 2; // e.g. "pods", "deployments"
+  string namespace   = 3; // empty = all namespaces
+  string label_selector = 4;
+  int64  poll_interval_seconds = 5; // 0 = watch (streaming), >0 = poll
+}

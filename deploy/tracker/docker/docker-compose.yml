@@ -1,0 +1,19 @@
+services:
+  tracker:
+    image: ghcr.io/farmops/farmops-tracker:0.1.0
+    restart: unless-stopped
+    ports:
+      - "8443:8443"
+    volumes:
+      - tracker_data:/var/lib/farmops-tracker
+      - ./tracker.yaml:/etc/farmops/tracker.yaml:ro
+    environment:
+      FARMOPS_API_KEY: "${FARMOPS_API_KEY}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8443/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  tracker_data:

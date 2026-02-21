@@ -1,11 +1,28 @@
-.idea
-node_modules
-.next
+# Binaries
+bin/
+dist/
+*.exe
+*.out
+
+# Go build cache
+*.test
+*.prof
+coverage.out
+
+# Environment
 .env
 .env.local
-.env.*.local
-dist
-*.tsbuildinfo
-next-env.d.ts
+
+# Editor
 .DS_Store
-prisma/migrations/*.sql
+.idea/
+.vscode/
+*.swp
+
+# Generated protobuf
+proto/**/*.pb.go
+
+# Agent key material (never commit)
+*.pem
+*.key
+agent-keys/

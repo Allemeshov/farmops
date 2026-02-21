@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package proof.v1;
+
+option go_package = "github.com/farmops/farmops/proto/proof/v1;proofv1";
+
+import "google/protobuf/timestamp.proto";
+
+// FarmProof is the fundamental unit of verified work.
+// It crosses the agent→tracker boundary and contains NO sensitive data.
+// Raw evidence stays in the agent; only its hash is transmitted.
+message FarmProof {
+  string schema_version = 1;
+
+  // Identity
+  string proof_id      = 2; // UUID v7
+  string prev_proof_id = 3; // UUID v7 of previous proof in chain; empty for genesis
+  string prev_proof_hash = 4; // sha256 hex of previous proof's canonical JSON; empty for genesis
+
+  google.protobuf.Timestamp timestamp = 5;
+
+  // Agent that produced this proof
+  AgentInfo agent = 6;
+
+  // Actor who performed the action (hashed, not raw)
+  ActorInfo actor = 7;
+
+  // What happened
+  ActionInfo action = 8;
+
+  // Outcome of the action
+  OutcomeInfo outcome = 9;
+
+  // Hints for the scoring engine (no sensitive data)
+  ScoringHints scoring_hints = 10;
+
+  // Ed25519 signature of canonical JSON of all fields above (excluding this field)
+  string signature = 11;
+}
+
+message AgentInfo {
+  string agent_id      = 1; // UUID of the agent instance
+  string cluster_alias = 2; // User-chosen label, e.g. "prod-eu-1" — NOT a real hostname
+}
+
+message ActorInfo {
+  string actor_hash = 1; // sha256(canonical-user-identifier) — NOT the raw identifier
+  string actor_type = 2; // "human" | "bot" | "system"
+}
+
+message ActionInfo {
+  string plugin      = 1; // e.g. "farmops/k8s-pod-health"
+  string action_type = 2; // "verify" | "fix" | "upgrade" | "deploy" | "resolve" | "review" | "configure" | "observe"
+  string category    = 3; // "maintenance" | "toil" | "reliability" | "security" | "incident" | "upgrade"
+  string subcategory = 4; // optional, plugin-defined
+  string description = 5; // human-readable, non-sensitive summary
+}
+
+message OutcomeInfo {
+  string status        = 1; // "success" | "failure" | "partial"
+  bool   verified      = 2;
+  string evidence_hash = 3; // sha256 of raw evidence kept locally by agent
+}
+
+message ScoringHints {
+  string complexity         = 1; // "low" | "medium" | "high"
+  int32  impact_radius      = 2; // 1–10
+  int32  artifacts_touched  = 3;
+  int64  time_spent_seconds = 4; // 0 if unknown
+}
+
+// SubmitProofRequest is sent by the agent to the tracker.
+message SubmitProofRequest {
+  FarmProof proof = 1;
+}
+
+message SubmitProofResponse {
+  bool   accepted     = 1;
+  string rejection_reason = 2; // non-empty if accepted=false
+  int32  coins_awarded    = 3; // 0 if not yet scored or rejected
+}
+
+// ProofService is the gRPC service exposed by the Stats Tracker for agent proof submission.
+service ProofService {
+  rpc SubmitProof(SubmitProofRequest) returns (SubmitProofResponse);
+}

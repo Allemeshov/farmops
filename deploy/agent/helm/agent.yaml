@@ -1,0 +1,39 @@
+# Farm Agent configuration example
+# Copy to agent.yaml and fill in the values.
+# Sensitive values should be set via environment variables, not here.
+
+# Stable UUID for this agent instance. Generate once with: uuidgen
+# Do NOT change after enrollment — the Stats Tracker keys proofs to this ID.
+agent_id: ""
+
+# User-chosen label for this cluster. Appears in proof descriptions.
+# Must NOT be a real hostname or IP — use a friendly alias like "prod-eu-1".
+cluster_alias: "my-cluster"
+
+# Stats Tracker base URL.
+# Override with FARMOPS_TRACKER_URL environment variable.
+tracker_url: "http://localhost:8443"
+
+# API key for authenticating with the Stats Tracker.
+# Override with FARMOPS_API_KEY environment variable (recommended).
+api_key: ""
+
+# Hex-encoded Ed25519 private key for signing proofs.
+# Generate with: farmctl agent keygen
+# Override with FARMOPS_PRIVATE_KEY environment variable (recommended).
+private_key: ""
+
+# Path to kubeconfig. Leave empty to use in-cluster config (default in k8s).
+kubeconfig: ""
+
+# Path to the local BoltDB proof buffer.
+# Proofs are buffered here if the tracker is temporarily unreachable.
+proof_buffer_path: "/var/lib/farmops-agent/proofs.db"
+
+# Plugins to load. Each plugin runs as a separate process (gRPC sidecar).
+# Phase 0 ships with the k8s-pod-health plugin built into the agent binary.
+plugins: []
+# Example:
+# plugins:
+#   - id: "farmops/terraform-drift"
+#     address: "unix:///tmp/farmops-terraform-drift.sock"

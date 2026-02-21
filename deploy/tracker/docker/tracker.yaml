@@ -1,0 +1,10 @@
+# Stats Tracker configuration
+# Copy this file and fill in the values, or use environment variable overrides.
+# Sensitive values should be set via FARMOPS_API_KEY env var, not here.
+
+listen_addr: ":8443"
+db_path: "/var/lib/farmops-tracker/tracker.db"
+
+# api_key is the shared secret agents must present to submit proofs.
+# Override with FARMOPS_API_KEY environment variable.
+api_key: ""

@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/farmops/farmops-agent
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+config:
+  agentId: ""           # required: stable UUID for this agent instance
+  clusterAlias: ""      # required: user-chosen label, e.g. "prod-eu-1"
+  trackerUrl: ""        # required: Stats Tracker base URL
+  proofBufferPath: "/var/lib/farmops-agent/proofs.db"
+
+# Sensitive values — provide via --set or a separate sealed-secrets/external-secrets setup.
+# Never commit real values here.
+secrets:
+  apiKey: ""        # FARMOPS_API_KEY
+  privateKey: ""    # FARMOPS_PRIVATE_KEY (hex-encoded Ed25519 private key)
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+  limits:
+    cpu: "200m"
+    memory: "128Mi"
+
+serviceAccount:
+  create: true
+  name: "farmops-agent"
+
+# The agent requires read-only cluster-wide access.
+# A ClusterRole and ClusterRoleBinding are created automatically.
+rbac:
+  create: true
