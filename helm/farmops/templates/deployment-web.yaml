@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "farmops.fullname" . }}-web
+  labels:
+    {{- include "farmops.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  replicas: {{ .Values.replicaCount.web }}
+  selector:
+    matchLabels:
+      {{- include "farmops.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      labels:
+        {{- include "farmops.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: web
+    spec:
+      containers:
+        - name: web
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["node", "server.js"]
+          ports:
+            - name: http
+              containerPort: {{ .Values.web.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/readyz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: {{ .Values.web.port | quote }}
+            - name: NEXTAUTH_URL
+              value: {{ .Values.env.NEXTAUTH_URL | quote }}
+            - name: FARMOPS_VERIFICATION_MODE
+              value: {{ .Values.env.FARMOPS_VERIFICATION_MODE | quote }}
+            - name: FARMOPS_LABELS
+              value: {{ .Values.env.FARMOPS_LABELS | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ include "farmops.fullname" . }}-secrets
+          resources:
+            {{- toYaml .Values.web.resources | nindent 12 }}

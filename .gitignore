@@ -1,0 +1,11 @@
+.idea
+node_modules
+.next
+.env
+.env.local
+.env.*.local
+dist
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+prisma/migrations/*.sql

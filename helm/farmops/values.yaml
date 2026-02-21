@@ -1,0 +1,74 @@
+replicaCount:
+  web: 1
+  worker: 1
+
+image:
+  repository: ghcr.io/your-org/farmops
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+web:
+  port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+worker:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: farmops.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+env:
+  NEXTAUTH_URL: "https://farmops.example.com"
+  FARMOPS_VERIFICATION_MODE: "checks"
+  FARMOPS_LABELS: "maintenance,toil,reliability,security"
+
+secrets:
+  DATABASE_URL: ""
+  NEXTAUTH_SECRET: ""
+  GITHUB_APP_ID: ""
+  GITHUB_PRIVATE_KEY: ""
+  GITHUB_WEBHOOK_SECRET: ""
+  GITHUB_CLIENT_ID: ""
+  GITHUB_CLIENT_SECRET: ""
+
+postgresql:
+  enabled: true
+  auth:
+    username: farmops
+    password: farmops
+    database: farmops
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+
+migrations:
+  enabled: true

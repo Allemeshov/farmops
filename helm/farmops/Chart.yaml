@@ -1,0 +1,16 @@
+apiVersion: v2
+name: farmops
+description: FarmOps – Gamified DevOps and SRE maintenance platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - devops
+  - sre
+  - gamification
+  - github
+home: https://github.com/your-org/farmops
+sources:
+  - https://github.com/your-org/farmops
+maintainers:
+  - name: FarmOps Contributors
